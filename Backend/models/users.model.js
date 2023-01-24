@@ -4,7 +4,7 @@ const UsersRegisterationSchema = mongoose.Schema({
   Email: { type: String, required: true },
   Phone: { type: String, required: true },
   Password: { type: String, required: true },
-  Type:String,
+  Type: String,
   Notifications: [
     {
       Notification: String,
@@ -55,11 +55,13 @@ const UsersRegisterationSchema = mongoose.Schema({
     },
   ],
   Charges: Number,
-  Applications:[{
-    Doctor_Name: String,
-    Doctor_Type:String,
-    Doctor_Phone:Number
-  }]
+  Applications: [
+    {
+      Doctor_Name: String,
+      Doctor_Type: String,
+      Doctor_Phone: Number,
+    },
+  ],
 });
 
 const RegisterationModel = mongoose.model("user", UsersRegisterationSchema);

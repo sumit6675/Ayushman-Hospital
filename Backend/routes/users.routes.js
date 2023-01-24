@@ -1,10 +1,10 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const userRoute = express.Router();
-const  RegisterationModel  = require("../models/users.model");
+const RegisterationModel = require("../models/users.model");
 const bcrypt = require("bcrypt");
 require("dotenv").config();
-const key=process.env.key
+const key = process.env.key;
 
 userRoute.post("/register", async (req, res) => {
   const { Name, Email, Password, Phone } = req.body;
@@ -14,57 +14,82 @@ userRoute.post("/register", async (req, res) => {
       res.status(401).json({ error: "Email Already Exists" });
     } else {
       bcrypt.hash(Password, 8, async (err, hash) => {
-        const message={
-            Notification:`Hello ${Name} Welcome to Ayushman Hospital You can book our services`,
-            view:false
-        }
+        const message = {
+          Notification: `Hello ${Name} Welcome to Ayushman Hospital You can book our services`,
+          view: false,
+        };
         const user = new RegisterationModel({
           Name,
           Email,
-          Password:hash,
+          Password: hash,
           Phone,
-          Type:"User",
-          Notifications:message
+          Type: "User",
+          Notifications:[message]
         });
         await user.save();
         res.status(200).json({ success: "Registered", user });
       });
     }
   } catch (err) {
-    console.log('err', err)
+    console.log("err", err);
     res.status(401).json({
       error: "Something went wrong",
     });
   }
 });
 
-userRoute.post("/login",async(req,res)=>{
-    const {Email,Password}=req.body
-    try{
-        const user=await RegisterationModel.findOne({Email})
-        if(user){
-            bcrypt.compare(Password,user.Password,(err,result)=>{
-                if(result){
-                    const token=jwt.sign({userId:user._id},key)
-                    res.status(200).json({ success: "Login Successful", token:token });
-                }else{
-                    res.status(401).json({
-                        error: "Please Enter Correct Password , Your Password not match with your current password",
-                      });
-                }
-            })
-        }else{
-            res.status(401).json({
-                error: "Please Enter Correct Email , Your Email not match with your current Email",
-              });
+userRoute.post("/login", async (req, res) => {
+  const { Email, Password } = req.body;
+  try {
+    const user = await RegisterationModel.findOne({ Email });
+    if (user) {
+      bcrypt.compare(Password, user.Password, (err, result) => {
+        if (result) {
+          const token = jwt.sign({ userId: user._id }, key);
+          res
+            .status(200)
+            .json({ success: "Login Successful", token: token, id: user._id });
+        } else {
+          res.status(401).json({
+            error:
+              "Please Enter Correct Password , Your Password not match with your current password",
+          });
         }
-    }catch(err){
-        console.log('err', err)
+      });
+    } else {
+      res.status(401).json({
+        error:
+          "Please Enter Correct Email , Your Email not match with your current Email",
+      });
+    }
+  } catch (err) {
+    console.log("err", err);
     res.status(401).json({
       error: "Something went wrong",
     });
-    }
-})
+  }
+});
+
+userRoute.patch("/adddoctor/:id", async (req, res) => {
+  const id = req.params.id;
+  try {
+    const message = {
+      Notification: `Congratulations You have appointed as Doctor in Ayushman Hospital`,
+      view: false,
+    };
+    // await RegisterationModel.findOneAndUpdate(
+    //   { _id: id }, {Type: "Doctor"}
+    // );
+    await RegisterationModel.findByIdAndUpdate(id,{Type: "Doctor", $push: { Notifications: message } }
+    );
+    res.status(200).json({ success: `Appointed as doctor` });
+  } catch (err) {
+    console.log("err", err);
+    res.status(401).json({
+      error: "Something went wrong",
+    });
+  }
+});
 
 userRoute.get("/", async (req, res) => {
   try {
@@ -79,11 +104,11 @@ userRoute.get("/", async (req, res) => {
   }
 });
 
-userRoute.delete("/delete/:id",async(req,res)=>{
-    const id=req.params.id;
-    await RegisterationModel.findByIdAndDelete(id)
-    res.send("success")
-})
+userRoute.delete("/delete/:id", async (req, res) => {
+  const id = req.params.id;
+  await RegisterationModel.findByIdAndDelete(id);
+  res.send("success");
+});
 
 module.exports = {
   userRoute,
