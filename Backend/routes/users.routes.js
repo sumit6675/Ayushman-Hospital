@@ -86,7 +86,7 @@ userRoute.post("/login", async (req, res) => {
 
 userRoute.patch("/adddoctor/:id", async (req, res) => {
   const id = req.params.id;
-  const{Doctor_Type,Experience,Charges}=req.body
+  const { Doctor_Type, Experience, Charges } = req.body;
   try {
     const message = {
       Notification: `Congratulations You have appointed as Doctor in Ayushman Hospital`,
@@ -136,6 +136,90 @@ userRoute.patch("/applyDoctor/:id", async (req, res) => {
       $push: { Notifications: message2 },
     });
     res.status(200).json({ success: `Apply for doctor` });
+  } catch (err) {
+    console.log("err", err);
+    res.status(401).json({
+      error: "Something went wrong",
+    });
+  }
+});
+
+userRoute.patch("/appointment/:id", async (req, res) => {
+  const DoctorId = req.params.id;
+  const DoctorData = await RegisterationModel.findById(DoctorId);
+  const DoctorName = DoctorData.Name;
+  const {
+    PatientId,
+    PatientName,
+    Age,
+    Phone,
+    illness,
+    Appointment_Time,
+    Appointment_Date,
+  } = req.body;
+  const busy = DoctorData.Appointment_DateTime.filter(
+    (i) =>
+      i.Appointment_Time === Appointment_Time &&
+      i.Appointment_Date === Appointment_Date
+  );
+  try {
+    if (busy.length === 0) {
+      const payload = {
+        PatientName,
+        PatientId,
+        Age,
+        Phone,
+        illness,
+        Appointment_Time,
+        Appointment_Date,
+        Approve: false,
+      };
+
+      const History = {
+        Doctor_Name: DoctorName,
+        Doctor_Type: DoctorData.Doctor_Type,
+        illness,
+        Fee: DoctorData.Charges,
+        Date: Appointment_Date,
+        Time: Appointment_Time,
+        DoctorId,
+      };
+      const appointmentDateTime = {
+        Appointment_Time,
+        Appointment_Date,
+      };
+      const message = {
+        Notification: `${PatientName} is Book a appointment for ${illness}  in ${Appointment_Date} ON ${Appointment_Time}`,
+        view: false,
+      };
+
+      await RegisterationModel.findByIdAndUpdate(DoctorId, {
+        $push: {
+          Notifications: message,
+          Appointment: payload,
+          Appointment_DateTime: appointmentDateTime,
+        },
+      });
+
+      const message2 = {
+        Notification: `${PatientName} You Book a appointment for ${illness} of Doctor ${DoctorName} in ${Appointment_Date} ON ${Appointment_Time} Wait Until he aprove`,
+        view: false,
+      };
+      await RegisterationModel.findByIdAndUpdate(PatientId, {
+        $push: {
+          Notifications: message2,
+          History: History,
+        },
+      });
+      res.status(200).json({
+        success: `Appointment Sucsessfully send to Doctor wait until he aprove`,
+      });
+    } else {
+      res.status(401).json({
+        error:
+          "Doctor is busy on this date and time please select a different time or date",
+      });
+    }
   } catch (err) {
     console.log("err", err);
     res.status(401).json({
