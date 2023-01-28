@@ -23,6 +23,7 @@ const UsersRegisterationSchema = mongoose.Schema({
   ],
   Doctor_Type: String,
   Experience: Number,
+  Charges: Number,
   review: [
     {
       rating: Number,
@@ -54,12 +55,13 @@ const UsersRegisterationSchema = mongoose.Schema({
       Approve: Boolean,
     },
   ],
-  Charges: Number,
   Applications: [
     {
       Doctor_Name: String,
       Doctor_Type: String,
       Doctor_Phone: Number,
+      Experience: Number,
+      Charges: Number,
     },
   ],
 });
