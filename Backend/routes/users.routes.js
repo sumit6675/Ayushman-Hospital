@@ -247,6 +247,8 @@ userRoute.delete("/delete/:id", async (req, res) => {
   res.send("success");
 });
 
+
+
 module.exports = {
   userRoute,
 };
